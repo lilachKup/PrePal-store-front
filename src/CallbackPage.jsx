@@ -1,13 +1,6 @@
 // src/CallbackPage.jsx
-import { useEffect } from "react";
-import { useAuth } from "react-oidc-context";
+import React from 'react';
 
 export default function CallbackPage() {
-  const auth = useAuth();
-
-  useEffect(() => {
-    auth.signinRedirectCallback();
-  }, []);
-
-  return <p>Redirecting...</p>;
+  return <p>🔐 Logging you in... Please wait.</p>;
 }
