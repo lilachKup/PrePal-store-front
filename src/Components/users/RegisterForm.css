@@ -1,0 +1,124 @@
+.auth-tabs-container {
+    background-color: #fcf9ff;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 440px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .tab-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .tab-button {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    cursor: pointer;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    color: #4a148c;
+    transition: 0.3s;
+  }
+  
+  .tab-content {
+    margin-top: 10px;
+  }
+  
+  .register-form {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+    text-align: center;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  
+  .submit-btn {
+    width: 100%;
+    background-color: #3a0ca3;
+    color: white;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .submit-btn:hover {
+    background-color: #240678;
+  }
+  
+  .form-message {
+    text-align: center;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+    color: #d00000;
+  }
+  
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: #3a0ca3;
+    user-select: none;
+    display: flex;
+    align-items: center;
+  }
+  
+  .password-input {
+    padding-right: 2.5rem !important;
+    height: 44px;
+    line-height: 1.5rem;
+  }
+  
+  .phone-prefix {
+    height: 42.5px;
+    padding: 0 10px;
+    background-color: #f2f2f2;
+    border: 1px solid #ccc;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    font-size: 0.95rem;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .phone-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+  }
+  
