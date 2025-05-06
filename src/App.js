@@ -6,6 +6,7 @@ import CallbackPage from './CallbackPage';
 import { useAuth } from 'react-oidc-context';
 import ConfirmRegistration from "./Components/users/ConfirmRegistration";
 
+
 function App() {
   const auth = useAuth();
   const location = useLocation();

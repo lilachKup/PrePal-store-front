@@ -19,12 +19,16 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  const [locationMarket, setLocationMarket] = useState('');
+  const [zipcode, setZipcode] = useState('');
+
 
   // const [address, setAddress] = useState('');
   // const [storeName, setStoreName] = useState('');
   // const [storeHours, setStoreHours] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister =  () => {
     if (!email || !password || !phoneNumber /* || !address || !storeName || !storeHours */) {
       setMessage("❌ All fields must be filled");
       return;
@@ -51,12 +55,40 @@ export default function RegisterForm() {
         console.log('✔️ Registered successfully', result);
         setMessage('✔️ Registered successfully!');
         setRegistrationSuccess(true);
+        createMarketInDB({
+          userSub: result.userSub,
+          storeName,
+          locationMarket,
+          email,
+          zipcode
+        });
         setTimeout(() => {
           window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
         }, 500);
       }
     });
   };
+
+  const createMarketInDB = async ({ market_id, name, location, email, zipcode }) => {
+    try {
+      const res = await fetch("https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ market_id, name, location, email, zipcode })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create market");
+      }
+
+      console.log("🏪 Market successfully created in DB");
+    } catch (err) {
+      console.error("❌ Error creating market in DB:", err);
+      throw err;
+    }
+  };
+
 
   return (
     <div className="register-form">
