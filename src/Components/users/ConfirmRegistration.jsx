@@ -41,7 +41,7 @@ export default function ConfirmRegistration() {
       } else {
         setMessage("✔️ Email confirmed! Redirecting to login...");
         setTimeout(() => {
-          auth.signinRedirect(); // 👈 זה מחזיר אותו ל-Hosted UI של Cognito
+          auth.signinRedirect(); //
         }, 1000);
       }
     });

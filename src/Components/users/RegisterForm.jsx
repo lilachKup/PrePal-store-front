@@ -19,9 +19,9 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const [storeName, setStoreName] = useState('');
-  const [locationMarket, setLocationMarket] = useState('');
-  const [zipcode, setZipcode] = useState('');
+  const [storeName, setStoreName] = useState('not set yet');
+  const [locationMarket, setLocationMarket] = useState('not set yet');
+  const [zipcode, setZipcode] = useState('not set yet');
 
 
   // const [address, setAddress] = useState('');
@@ -47,7 +47,7 @@ export default function RegisterForm() {
       // new CognitoUserAttribute({ Name: 'custom:store_opening_hours', Value: storeHours })
     ];
 
-    userPool.signUp(email, password, attributes, null, (err, result) => {
+    userPool.signUp(email, password, attributes, null, async (err, result) => {
       if (err) {
         console.error(err);
         setMessage('❌ ' + err.message);
@@ -55,30 +55,42 @@ export default function RegisterForm() {
         console.log('✔️ Registered successfully', result);
         setMessage('✔️ Registered successfully!');
         setRegistrationSuccess(true);
-        createMarketInDB({
-          userSub: result.userSub,
-          storeName,
-          locationMarket,
-          email,
-          zipcode
-        });
-        setTimeout(() => {
-          window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
-        }, 500);
+
+        try {
+          await createMarketInDB({
+            store_id: result.userSub,
+            name: storeName,
+            location: locationMarket,
+            email,
+            zipcode
+          });
+
+          console.log("🏪 Market created successfully in DB");
+
+          setTimeout(() => {
+            window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
+          }, 500);
+
+        } catch (err) {
+          console.error("❌ Error creating market in DB:", err);
+          setMessage("❌ Failed to create market. Please try again.");
+        }
       }
     });
+
+
   };
 
-  const createMarketInDB = async ({ market_id, name, location, email, zipcode }) => {
+  const createMarketInDB = async ({ store_id, name, location, email, zipcode }) => {
     try {
       const res = await fetch("https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ market_id, name, location, email, zipcode })
+        body: JSON.stringify({ store_id, name, location, email, zipcode })
       });
 
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json(); // גם כאן צריך await
         throw new Error(err.error || "Failed to create market");
       }
 
@@ -88,6 +100,7 @@ export default function RegisterForm() {
       throw err;
     }
   };
+
 
 
   return (

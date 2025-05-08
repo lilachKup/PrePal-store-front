@@ -11,17 +11,20 @@ function App() {
   const auth = useAuth();
   const location = useLocation();
 
-  // אם המשתמש כבר מחובר ומנסה להיכנס לדף ההתחברות, נעביר אותו ל-inventory
-  if (auth.isAuthenticated && location.pathname === '/') {
-    return <Navigate to="/inventory" replace />;
-  }
 
-  return (
+    if (auth.isAuthenticated && location.pathname === '/') {
+        const marketId = auth.user?.profile?.sub;
+        return <Navigate to={`/store/${marketId}`} replace />;
+    }
+
+
+    return (
     <Routes>
       <Route path="/" element={<AuthTabs />} />
       <Route path="/confirm" element={<ConfirmRegistration />} />
       <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/inventory" element={<StoreInventory />} />
+        <Route path="/inventory" element={<StoreInventory storeId={auth.user?.profile?.sub} />} />
+
     </Routes>
   );
 }

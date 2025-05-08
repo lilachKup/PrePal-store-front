@@ -4,13 +4,16 @@ import categories from "./Categories"; // Importing categories from a separate f
 //import "./CategoryPanel.css";
 import axios from "axios";
 
+
 ///in the future this will be replaced with the store id from the store info
 
 
 
-const StoreInventory = ({ userId }) => {
+const StoreInventory = ({storeId}) => {
+  //const storeId = userId;
+  //const store_id = storeId;
+  console.log("storee id: ", storeId);
   //const urlToPostAddProduct = "https://qbaqxcpvnj.execute-api.us-east-1.amazonaws.com/dev/market/items"; //matanlambda
-  //const urlToPostAddProduct = "https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/add"; //nivlambda
   const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({ id: "", name: "", category: "", price: "", quantity: "", description: "", brand: "", image: "" });
   const [error, setError] = useState("");
@@ -19,28 +22,25 @@ const StoreInventory = ({ userId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProductsBySearch, setFilteredProductsBySearch] = useState([]);
   const [isSearchOn, setIsSearchOn] = useState(false);
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+
 
   useEffect(() => {
-    console.log("Store user ID:", userId);
+    if(storeId) {
+      fetchProducts(storeId);
+    }
+
+  }, [storeId]);
+
+  useEffect(() => {
+    console.log("Store user ID:", storeId);
     // אפשר להשתמש בזה כדי למשוך מוצרים לפי ID
-  }, [userId]);
-  
-
-  const store_info = {
-    //store_id: userId,
-    store_id: 1,
-    store_name: "Store Name",
-    store_address: "Store Address",
-  }
+  }, [storeId]);
 
   const addProducts = async (productToAdd) => {
     try {
       const response = await axios.post(
         'https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/add',
-        productToAdd
+          productToAdd,
       );
       console.log("Response from Lambda:", response.data);
       return response.data;
@@ -50,11 +50,15 @@ const StoreInventory = ({ userId }) => {
     }
   }
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (storeId) => {
+    if (!storeId) {
+      console.warn("fetchProducts called with undefined storeId");
+      return;
+    }
     try {
-      const response = await axios.get(`...`);
-      const data = response.data;
-
+      const response = await fetch(`https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/getAllPProducts/${storeId}`);
+      const data = await response.json();
+      console.log("API Response:", data);
       const productsArray = Array.isArray(data)
         ? data
         : Array.isArray(data.products)
@@ -69,7 +73,7 @@ const StoreInventory = ({ userId }) => {
     }
   };
 
-  const editProductFromStore = async (store_id, product_id, description, price, quantity, image_url) => {
+  const editProductFromStore = async (storeId, product_id, description, price, quantity, image_url) => {
     try {
 
       const response = await fetch('https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/edit', {
@@ -77,7 +81,7 @@ const StoreInventory = ({ userId }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ store_id, product_id, description, price, quantity, image_url })
+        body: JSON.stringify({ store_id: storeId, product_id, description, price, quantity, image_url })
       });
 
       const data = await response.json();
@@ -94,7 +98,7 @@ const StoreInventory = ({ userId }) => {
     }
   };
 
-  const deleteProductFromStore = async (store_id, product_id) => {
+  const deleteProductFromStore = async (storeId, product_id) => {
     try {
 
       const response = await fetch('https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/deleteFromStore', {
@@ -102,7 +106,7 @@ const StoreInventory = ({ userId }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ store_id, product_id })
+        body: JSON.stringify({ store_id: storeId, product_id })
       });
 
       const data = await response.json();
@@ -143,13 +147,13 @@ const StoreInventory = ({ userId }) => {
     }
 
     if (editingProduct !== null) {
-      await editProductFromStore(store_info.store_id, editingProduct, newProduct.description, newProduct.price, newProduct.quantity, newProduct.image);
+      await editProductFromStore(storeId, editingProduct, newProduct.description, newProduct.price, newProduct.quantity, newProduct.image);
 
       //setProducts(products.map((product) =>
       //  product.id === editingProduct ? { ...newProduct, id: editingProduct } : product
       //));
       setEditingProduct(null);
-      await fetchProducts();
+      await fetchProducts(storeId);
     }
     else {
       const filteredList = products.filter(product => newProduct.name === product.name)
@@ -160,9 +164,11 @@ const StoreInventory = ({ userId }) => {
       }
 
       setProducts([...products, { ...newProduct, id: Date.now() }]);
+      console.log("new product: ", newProduct);
+      console.log("all products: ", products);
 
       const productToAdd = {
-        store_id: store_info.store_id,
+        store_id: storeId,
         product_name: newProduct.name,
         category: newProduct.category,
         description: " ",
@@ -173,19 +179,20 @@ const StoreInventory = ({ userId }) => {
       }
 
       await addProducts(productToAdd);
+      await fetchProducts(storeId);
     }
 
     setNewProduct({ name: "", price: "", quantity: "", brand: "", description: "", image: "", category: categoryChoice }); // Clear form fields after submission
     setError(""); // Clear error after successful addition
-    await fetchProducts();
+    await fetchProducts(storeId);
     handleSearch();
   };
 
   const removeProduct = async (id) => {
     setProducts(products.filter((product) => product.id !== id));
     setEditingProduct(null); // Clear editing state if the removed product was being edited
-    await deleteProductFromStore(store_info.store_id, id);
-    await fetchProducts();
+    await deleteProductFromStore(storeId, id);
+    await fetchProducts(storeId);
     if (isSearchOn) {
       handleSearch();
     }
