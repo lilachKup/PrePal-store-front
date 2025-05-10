@@ -13,12 +13,6 @@ const cognitoAuthConfig = {
   response_type: "code",
   scope: "openid email phone",
   loadUserInfo: true,
-
-  // ✅ שינוי כאן – ניתוב לאחר login מוצלח
-  onSigninCallback: () => {
-    window.location.href = "/inventory";
-  },
-
   metadata: {
     issuer: "https://us-east-1cs31kzbts.auth.us-east-1.amazoncognito.com",
     authorization_endpoint: "https://us-east-1cs31kzbts.auth.us-east-1.amazoncognito.com/oauth2/authorize",

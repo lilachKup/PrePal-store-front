@@ -12,6 +12,12 @@ const poolData = {
 
 const userPool = new CognitoUserPool(poolData);
 
+const hoursOptions = [
+  '', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
+  '20:00', '21:00', '22:00', '23:00'
+];
+
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,17 +25,32 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const [storeName, setStoreName] = useState('not set yet');
-  const [locationMarket, setLocationMarket] = useState('not set yet');
-  const [zipcode, setZipcode] = useState('not set yet');
+  const [address, setAddress] = useState('');
+  const [storeName, setStoreName] = useState('');
+  const [openingHours, setOpeningHours] = useState({
+    Sunday: { open: '', close: '', closed: false },
+    Monday: { open: '', close: '', closed: false },
+    Tuesday: { open: '', close: '', closed: false },
+    Wednesday: { open: '', close: '', closed: false },
+    Thursday: { open: '', close: '', closed: false },
+    Friday: { open: '', close: '', closed: false },
+    Saturday: { open: '', close: '', closed: false }
+  });
 
+  const handleHoursChange = (day, updated) => {
+    setOpeningHours((prev) => ({
+      ...prev,
+      [day]: updated
+    }));
+  };
 
-  // const [address, setAddress] = useState('');
-  // const [storeName, setStoreName] = useState('');
-  // const [storeHours, setStoreHours] = useState('');
+  const handleRegister = () => {
+    const storeHours = Object.entries(openingHours)
+      .map(([day, { open, close, closed }]) =>
+        closed ? `${day}: Closed` : `${day}: ${open}–${close}`
+      ).join(', ');
 
-  const handleRegister =  () => {
-    if (!email || !password || !phoneNumber /* || !address || !storeName || !storeHours */) {
+    if (!email || !password || !phoneNumber || !address || !storeName || !storeHours) {
       setMessage("❌ All fields must be filled");
       return;
     }
@@ -42,9 +63,9 @@ export default function RegisterForm() {
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
       new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}` }),
-      // new CognitoUserAttribute({ Name: 'custom:address', Value: address }),
-      // new CognitoUserAttribute({ Name: 'custom:store_name', Value: storeName }),
-      // new CognitoUserAttribute({ Name: 'custom:store_opening_hours', Value: storeHours })
+      /*new CognitoUserAttribute({ Name: 'custom:address', Value: address }),
+      new CognitoUserAttribute({ Name: 'custom:store_name', Value: storeName }),
+      new CognitoUserAttribute({ Name: 'custom:store_opening_hours', Value: storeHours })*/
     ];
 
     userPool.signUp(email, password, attributes, null, async (err, result) => {
@@ -60,9 +81,9 @@ export default function RegisterForm() {
           await createMarketInDB({
             store_id: result.userSub,
             name: storeName,
-            location: locationMarket,
+            address,
             email,
-            zipcode
+            storeHours
           });
 
           console.log("🏪 Market created successfully in DB");
@@ -70,27 +91,31 @@ export default function RegisterForm() {
           setTimeout(() => {
             window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
           }, 500);
-
         } catch (err) {
           console.error("❌ Error creating market in DB:", err);
           setMessage("❌ Failed to create market. Please try again.");
         }
       }
     });
-
-
   };
 
-  const createMarketInDB = async ({ store_id, name, location, email, zipcode }) => {
+  const createMarketInDB = async ({ store_id, name, address, email, storeHours }) => {
     try {
       const res = await fetch("https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ store_id, name, location, email, zipcode })
+        body: JSON.stringify({
+          store_id,
+          name,
+          location: address,
+          email,
+          store_hours: storeHours,
+          coordinates: "30.12345,34.56789"
+        })
       });
 
       if (!res.ok) {
-        const err = await res.json(); // גם כאן צריך await
+        const err = await res.json();
         throw new Error(err.error || "Failed to create market");
       }
 
@@ -100,8 +125,6 @@ export default function RegisterForm() {
       throw err;
     }
   };
-
-
 
   return (
     <div className="register-form">
@@ -118,23 +141,10 @@ export default function RegisterForm() {
           onChange={(e) => setPassword(e.target.value)}
           className="form-input password-input"
         />
-        <span
-          className="toggle-password"
-          onClick={() => setShowPassword(!showPassword)}
-          title={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? "🙈" : "👁" }
+        <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? "🙈" : "👁"}
         </span>
       </div>
-
-      {/* <label>Address:</label>
-      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="form-input" />
-
-      <label>Store name:</label>
-      <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className="form-input" />
-
-      <label>Opening hours:</label>
-      <input type="text" value={storeHours} onChange={(e) => setStoreHours(e.target.value)} className="form-input" /> */}
 
       <label>Phone number:</label>
       <div className="phone-container">
@@ -144,8 +154,52 @@ export default function RegisterForm() {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
           maxLength={9}
-          className="form-input phone-input"
+          className="phone-input"
         />
+      </div>
+
+      <label>Address:</label>
+      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="form-input" />
+
+      <label>Store name:</label>
+      <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className="form-input" />
+
+      {/*<label>Opening hours:</label>*/}
+      <div className="opening-hours-box">
+        <h3>Opening Hours</h3>
+        {Object.entries(openingHours).map(([day, { open, close, closed }]) => (
+          <div key={day} className="day-hours-row">
+            <label>{day}:</label>
+            <select
+              value={open}
+              onChange={(e) => handleHoursChange(day, { open: e.target.value, close, closed })}
+              disabled={closed}
+              className="form-select"
+            >
+              {hoursOptions.map((hour) => (
+                <option key={hour} value={hour}>{hour}</option>
+              ))}
+            </select>
+            <span>to</span>
+            <select
+              value={close}
+              onChange={(e) => handleHoursChange(day, { open, close: e.target.value, closed })}
+              disabled={closed}
+              className="form-select"
+            >
+              {hoursOptions.map((hour) => (
+                <option key={hour} value={hour}>{hour}</option>
+              ))}
+            </select>
+            <label style={{ marginLeft: '10px' }}>
+              <input
+                type="checkbox"
+                checked={closed}
+                onChange={(e) => handleHoursChange(day, { open: '', close: '', closed: e.target.checked })}
+              /> Closed
+            </label>
+          </div>
+        ))}
       </div>
 
       <button onClick={handleRegister} className="submit-btn">Sign Up</button>

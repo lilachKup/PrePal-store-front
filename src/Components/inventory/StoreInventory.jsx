@@ -175,7 +175,7 @@ const StoreInventory = ({storeId}) => {
         price: Number(newProduct.price),
         quantity: Number(newProduct.quantity),
         image_url: "",
-        brand: "123"
+        brand: newProduct.brand
       }
 
       await addProducts(productToAdd);
