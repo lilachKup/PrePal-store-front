@@ -11,7 +11,7 @@ const cognitoAuthConfig = {
   client_id: "797di13hgmlrd5lthlpkelbgll",
   redirect_uri: window.location.origin + "/callback",
   response_type: "code",
-  scope: "openid email phone",
+  scope: "openid email phone profile",
   loadUserInfo: true,
   metadata: {
     issuer: "https://us-east-1cs31kzbts.auth.us-east-1.amazoncognito.com",

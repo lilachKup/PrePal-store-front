@@ -5,6 +5,7 @@ import AuthTabs from './Components/users/AuthTabs';
 import CallbackPage from './CallbackPage';
 import { useAuth } from 'react-oidc-context';
 import ConfirmRegistration from "./Components/users/ConfirmRegistration";
+import StoreOrder from './Components/orders/StoreOrder';
 
 
 function App() {
@@ -23,7 +24,22 @@ function App() {
       <Route path="/" element={<AuthTabs />} />
       <Route path="/confirm" element={<ConfirmRegistration />} />
       <Route path="/callback" element={<CallbackPage />} />
-        <Route path="/inventory" element={<StoreInventory storeId={auth.user?.profile?.sub} />} />
+      <Route
+          path="/inventory"
+          element={
+            auth.user?.profile ? (
+                <StoreInventory
+                    storeId={auth.user.profile.sub}
+                    storeName={auth.user.profile.name}
+                />
+            ) : (
+                <div>Loading...</div>
+            )
+          }
+      />
+
+      <Route path="/orders" element={<StoreOrder />} />
+
 
     </Routes>
   );

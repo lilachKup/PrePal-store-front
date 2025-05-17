@@ -65,6 +65,7 @@ export default function RegisterForm() {
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
       new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}`}),
+      new CognitoUserAttribute({ Name: 'name', Value: storeName })
     ];
 
     userPool.signUp(email, password, attributes, null, async (err, result) => {

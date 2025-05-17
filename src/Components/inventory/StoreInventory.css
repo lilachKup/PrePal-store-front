@@ -403,5 +403,15 @@ body {
     .cancel-choice:hover {
       background-color: #f5c6cb;
    
-   } 
-    
+   }
+
+
+.go-to-orders-button {
+  margin: 10px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

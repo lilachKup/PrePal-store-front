@@ -19,8 +19,8 @@ export default function ConfirmRegistration() {
   const [message, setMessage] = useState("");
   const auth = useAuth(); // 👈 ניגשנו ל-auth
 
-  // שליפת מייל מה-URL אם הגיע מ-?email=...
-  useEffect(() => {
+
+    useEffect(() => {
     const emailFromUrl = new URLSearchParams(window.location.search).get("email");
     if (emailFromUrl) {
       setEmail(emailFromUrl);

@@ -1,29 +1,74 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import "./StoreOrder.css";
-import { io } from "socket.io-client";
-const storeId = "123";
+import {io} from "socket.io-client";
+import {useNavigate} from "react-router-dom";
+import {useLocation} from 'react-router-dom';
+
+
 const StoreOrder = () => {
+    const navigate = useNavigate();
+
+    const location = useLocation();
+    const {storeId, storeName} = location.state || {};
+
+    console.log("storeId", storeId);
+    console.log("storeName", storeName);
+
     const [orders, setOrders] = useState([]);
     const [expandedOrders, setExpandedOrders] = useState({});
 
+
     useEffect(() => {
-        const socket = io("https://prepal-render.onrender.com"); // ← חיבור לשרת
+        let intervalId;
 
-        socket.on("connect", () => {
-            console.log("🟢 Connected to socket:", socket.id);
-            socket.emit("joinStoreRoom", `store-${storeId}`);
-        });
+        const fetchOrders = async () => {
+            try {
+                const response = await fetch(`https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/getAllOrdersFromStore/${storeId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
 
-
-        socket.on("newOrder", (order) => {
-            console.log("📦 New order received:", order);
-            setOrders(prev => [...prev, order]);
-        });
-
-        return () => {
-            socket.disconnect(); // ← חשוב לנקות כשעוזבים את הקומפוננטה
+                const data = await response.json();
+                if (!data.orders) {
+                    console.log("❌ No orders found");
+                } else {
+                    seperateOrders(data.orders);
+                }
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            }
         };
-    }, []);
+
+        fetchOrders();
+
+        intervalId = setInterval(fetchOrders, 5000);
+
+        return () => clearInterval(intervalId);
+
+    }, [storeId]);
+
+
+    const seperateOrders = (allOrdersFromStore) => {
+        const formattedOrders = allOrdersFromStore.map(order => ({
+            id: order.order_num,
+            clientName: order.customer_name,
+            totalPrice: order.total_price,
+            location: order.customer_Location,
+            customerMail: order.customer_mail,
+            street: "",
+            status: "pending",
+            products: order.items.map(item => {
+                const [name, quantity] = item.split(":").map(s => s.trim());
+                return {name, quantity: parseInt(quantity, 10)};
+            })
+        }));
+
+        setOrders(formattedOrders);
+    };
+
 
     const toggleExpand = (id) => {
         setExpandedOrders((prev) => ({
@@ -35,35 +80,25 @@ const StoreOrder = () => {
     const handleStatusChange = (order, status) => {
         if (status === "ready") {
             setOrders((prev) =>
-                prev.map((o) => (o.id === order.id ? { ...order, status } : o))
+                prev.map((o) => (o.id === order.id ? {...order, status} : o))
             );
-        } else {
+            //todo send mail to customer if order is ready
+        }
+        else {
             setOrders((prev) => prev.filter((o) => o.id !== order.id));
+            //todo send mail to customer if order will not be ready
+            //todo send delete order from store
         }
     };
 
 
-    /*const sendOrder = async () => {
-        try {
-            const response = await fetch("http://localhost:3001/sendOrder", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-            });
-
-            const newOrder = await response.json();
-            setOrders(prev => [...prev, newOrder]); // ⬅️ מציג רק אם שלחת
-        } catch (err) {
-            console.error("❌ Failed to send order", err);
-        }
-    };*/
-
-
     return (
+
         <div className="store-orders-wrapper">
-            <h2 className="store-title">shupersal online </h2>
+            <button onClick={() => navigate('/inventory')} className="go-to-store-button">
+                Go to Orders
+            </button>
+            <h2 className="store-title">{storeName} orders </h2>
             <div className="orders-container">
                 {orders.length === 0 ? (
                     <p>no orders </p>
@@ -82,6 +117,9 @@ const StoreOrder = () => {
                             </p>
                             <p>
                                 <strong>Status:</strong> {order.status}
+                            </p>
+                            <p>
+                                <strong>Email:</strong> {order.customerMail}
                             </p>
 
                             <button
