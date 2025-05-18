@@ -154,3 +154,58 @@
   max-width: 80px;
   flex-shrink: 0;
 }
+
+.resend-code-btn {
+  background-color: transparent;
+  color: #007bff;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 10px;
+  text-decoration: underline;
+}
+
+.resend-code-btn:hover {
+  color: #0056b3;
+}
+
+
+/* Login Button diffrenet color option */
+/*.login-btn {
+  width: 100%;
+  background-color: #e0dcf9;
+  color: #3a0ca3;
+  border: none;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.login-btn:hover {
+  background-color: #3a0ca3;
+  color: white;
+}*/
+
+.login-btn {
+  width: 100%;
+  background-color: white;
+  color: #3a0ca3;
+  border: 1px solid #3a0ca3;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.login-btn:hover {
+  background-color: #3a0ca3;
+  color: white;
+}
+
+

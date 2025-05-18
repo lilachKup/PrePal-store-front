@@ -19,7 +19,6 @@ export default function ConfirmRegistration() {
   const [message, setMessage] = useState("");
   const auth = useAuth(); // 👈 ניגשנו ל-auth
 
-  // שליפת מייל מה-URL אם הגיע מ-?email=...
   useEffect(() => {
     const emailFromUrl = new URLSearchParams(window.location.search).get("email");
     if (emailFromUrl) {
@@ -47,6 +46,24 @@ export default function ConfirmRegistration() {
     });
   };
 
+  const handleResendCode = () => {
+    const userData = {
+      Username: email,
+      Pool: userPool
+    };
+    const cognitoUser = new CognitoUser(userData);
+
+    cognitoUser.resendConfirmationCode((err, result) => {
+      if (err) {
+        console.error(err);
+        setMessage("❌ " + err.message);
+      } else {
+        console.log('Code resent successfully');
+        setMessage("✔️ Verification code resent. Check your email.");
+      }
+    });
+  };
+
   return (
     <div className="register-form">
       <h2 className="form-title">Confirm Your Email</h2>
@@ -69,6 +86,7 @@ export default function ConfirmRegistration() {
       />
 
       <button onClick={handleConfirm} className="submit-btn">Confirm</button>
+      <button type="button" onClick={handleResendCode} className="resend-code-btn">Resend Code</button>
       <p className="form-message">{message}</p>
     </div>
   );

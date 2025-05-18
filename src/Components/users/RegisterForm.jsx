@@ -4,6 +4,8 @@ import {
   CognitoUserAttribute
 } from 'amazon-cognito-identity-js';
 import './RegisterForm.css';
+import { useAuth } from 'react-oidc-context';
+
 
 const poolData = {
   UserPoolId: 'us-east-1_cs31KzbTS',
@@ -19,6 +21,7 @@ const hoursOptions = [
 ];
 
 export default function RegisterForm() {
+  const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +30,7 @@ export default function RegisterForm() {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [address, setAddress] = useState('');
   const [storeName, setStoreName] = useState('');
+  const [showLoginButton, setShowLoginButton] = useState(false);
   const [openingHours, setOpeningHours] = useState({
     Sunday: { open: '', close: '', closed: false },
     Monday: { open: '', close: '', closed: false },
@@ -72,6 +76,10 @@ export default function RegisterForm() {
       if (err) {
         console.error(err);
         setMessage('❌ ' + err.message);
+
+        if (err.code === 'UsernameExistsException') {
+          setShowLoginButton(true);
+        }
       } else {
         console.log('✔️ Registered successfully', result);
         setMessage('✔️ Registered successfully!');
@@ -110,7 +118,7 @@ export default function RegisterForm() {
           location: address,
           email,
           store_hours: storeHours,
-          coordinates: "30.12345,34.56789"
+          store_coordinates: "30.12345,34.56789"
         })
       });
 
@@ -124,6 +132,10 @@ export default function RegisterForm() {
       console.error("❌ Error creating market in DB:", err);
       throw err;
     }
+  };
+
+  const handleLoginButton = () => {
+    auth.signinRedirect();
   };
 
   return (
@@ -200,10 +212,22 @@ export default function RegisterForm() {
             </label>
           </div>
         ))}
+
       </div>
 
       <button onClick={handleRegister} className="submit-btn">Sign Up</button>
+
       <p className="form-message">{message}</p>
+
+      {showLoginButton && (
+        <div style={{ textAlign: 'center', marginTop: '5px' }}>
+          <button
+            className="login-btn"
+            onClick={handleLoginButton}>
+            Log In
+          </button>
+        </div>
+      )}
 
       {registrationSuccess && (
         <p className="form-message">✔️ Please check your email to confirm</p>
