@@ -29,6 +29,8 @@ export default function RegisterForm() {
   const [message, setMessage] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [street, setStreet] = useState('');
   const [storeName, setStoreName] = useState('');
   const [showLoginButton, setShowLoginButton] = useState(false);
   const [openingHours, setOpeningHours] = useState({
@@ -54,7 +56,7 @@ export default function RegisterForm() {
         closed ? `${day}: Closed` : `${day}: ${open}–${close}`
       ).join(', ');
 
-    if (!email || !password || !phoneNumber || !address || !storeName || !storeHours) {
+    if (!email || !password || !phoneNumber || !city || !street || !storeName || !storeHours) {
       setMessage("❌ All fields must be filled");
       return;
     }
@@ -66,10 +68,8 @@ export default function RegisterForm() {
 
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
-      new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}` }),
-      /*new CognitoUserAttribute({ Name: 'custom:address', Value: address }),
-      new CognitoUserAttribute({ Name: 'custom:store_name', Value: storeName }),
-      new CognitoUserAttribute({ Name: 'custom:store_opening_hours', Value: storeHours })*/
+      new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}`}),
+      new CognitoUserAttribute({ Name: 'name', Value: storeName })
     ];
 
     userPool.signUp(email, password, attributes, null, async (err, result) => {
@@ -89,7 +89,7 @@ export default function RegisterForm() {
           await createMarketInDB({
             store_id: result.userSub,
             name: storeName,
-            address,
+            address: `${city}, ${street}`,
             email,
             storeHours
           });
@@ -109,6 +109,10 @@ export default function RegisterForm() {
 
   const createMarketInDB = async ({ store_id, name, address, email, storeHours }) => {
     try {
+      const coordinatesFromAddress = await getCoordinatesFromAddress(address);
+      //let check = await fetch ("https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/location?address=Aza 25, Tel Aviv");
+      //console.log(check);
+      //check = await check.json();
       const res = await fetch("https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,7 +122,9 @@ export default function RegisterForm() {
           location: address,
           email,
           store_hours: storeHours,
-          store_coordinates: "30.12345,34.56789"
+
+          store_coordinates: `${coordinatesFromAddress.lat},${coordinatesFromAddress.lon}`
+          //coordinates: `${check.lat},${check.lon}`
         })
       });
 
@@ -133,6 +139,15 @@ export default function RegisterForm() {
       throw err;
     }
   };
+  const getCoordinatesFromAddress = async (address) => {
+    const response = await fetch(`https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/location?address=${address}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch coordinates");
+    }
+    const data = await response.json();
+    console.log(data);
+    return data;
+  }
 
   const handleLoginButton = () => {
     auth.signinRedirect();
@@ -170,8 +185,15 @@ export default function RegisterForm() {
         />
       </div>
 
-      <label>Address:</label>
+      {/*<label>Address:</label>
       <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="form-input" />
+      */}
+      <label>City:</label>
+      <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="form-input" />
+
+      <label>Street:</label>
+      <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="form-input" />
+
 
       <label>Store name:</label>
       <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className="form-input" />
