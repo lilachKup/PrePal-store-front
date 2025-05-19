@@ -13,29 +13,29 @@ function App() {
   const location = useLocation();
 
 
-    if (auth.isAuthenticated && location.pathname === '/') {
-        const marketId = auth.user?.profile?.sub;
-        return <Navigate to={`/store/${marketId}`} replace />;
-    }
+  /*if (auth.isAuthenticated && location.pathname === '/') {
+    const marketId = auth.user?.profile?.sub;
+    return <Navigate to={`/store/${marketId}`} replace />;
+  }*/
 
 
-    return (
+  return (
     <Routes>
       <Route path="/" element={<AuthTabs />} />
       <Route path="/confirm" element={<ConfirmRegistration />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route
-          path="/inventory"
-          element={
-            auth.user?.profile ? (
-                <StoreInventory
-                    storeId={auth.user.profile.sub}
-                    storeName={auth.user.profile.name}
-                />
-            ) : (
-                <div>Loading...</div>
-            )
-          }
+        path="/inventory"
+        element={
+          auth.user?.profile ? (
+            <StoreInventory
+              storeId={auth.user.profile.sub}
+              storeName={auth.user.profile.name}
+            />
+          ) : (
+            <div>Loading...</div>
+          )
+        }
       />
 
       <Route path="/orders" element={<StoreOrder />} />

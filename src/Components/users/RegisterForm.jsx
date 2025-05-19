@@ -31,6 +31,8 @@ export default function RegisterForm() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [storeName, setStoreName] = useState('');
   const [showLoginButton, setShowLoginButton] = useState(false);
   const [openingHours, setOpeningHours] = useState({
@@ -56,7 +58,7 @@ export default function RegisterForm() {
         closed ? `${day}: Closed` : `${day}: ${open}–${close}`
       ).join(', ');
 
-    if (!email || !password || !phoneNumber || !city || !street || !storeName || !storeHours) {
+    if (!email || !password || !phoneNumber || !city || !street || !storeName || !houseNumber || !zipCode || !storeHours) {
       setMessage("❌ All fields must be filled");
       return;
     }
@@ -68,7 +70,7 @@ export default function RegisterForm() {
 
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
-      new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}`}),
+      new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}` }),
       new CognitoUserAttribute({ Name: 'name', Value: storeName })
     ];
 
@@ -89,7 +91,7 @@ export default function RegisterForm() {
           await createMarketInDB({
             store_id: result.userSub,
             name: storeName,
-            address: `${city}, ${street}`,
+            address: `${city}, ${street}, ${houseNumber}`,
             email,
             storeHours
           });
@@ -194,6 +196,8 @@ export default function RegisterForm() {
       <label>Street:</label>
       <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="form-input" />
 
+      <label>House Number:</label>
+      <input type="text" value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} className="form-input" />
 
       <label>Store name:</label>
       <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className="form-input" />
