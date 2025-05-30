@@ -11,8 +11,7 @@ import {useNavigate} from 'react-router-dom';
 
 const StoreInventory = ({storeId, storeName}) => {
 
-    console.log("store id: ", storeId);
-    console.log("store name: ", storeName);
+
     const navigate = useNavigate();
 
     const [products, setProducts] = useState([]);
@@ -44,6 +43,7 @@ const StoreInventory = ({storeId, storeName}) => {
 
     const addProducts = async (productToAdd) => {
         try {
+            // matan url https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/store/product
             const response = await axios.post('https://xgpbt0u4ql.execute-api.us-east-1.amazonaws.com/prod/products/add', productToAdd,);
             console.log("Response from Lambda:", response.data);
             return response.data;
