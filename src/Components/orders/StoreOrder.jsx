@@ -77,15 +77,27 @@ const StoreOrder = () => {
         }));
     };
 
-    const handleStatusChange = (order, status) => {
+    const handleStatusChange = async (order, status) => {
         if (status === "ready") {
             setOrders((prev) =>
                 prev.map((o) => (o.id === order.id ? {...order, status} : o))
             );
+
             //todo send mail to customer if order is ready
         }
         else {
             setOrders((prev) => prev.filter((o) => o.id !== order.id));
+            const response = await fetch("https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/deleteOrderFromStore", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    order: order.id,
+                    store_id: storeId,
+                }),
+            });
+
             //todo send mail to customer if order will not be ready
             //todo send delete order from store
         }
