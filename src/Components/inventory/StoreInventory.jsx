@@ -43,8 +43,9 @@ const StoreInventory = ({storeId, storeName}) => {
 
     const addProducts = async (productToAdd) => {
         try {
+            console.log("Adding product to Lambda before send:", productToAdd);
             // matan url https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/store/product
-            const response = await axios.post('https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/store/product', productToAdd,);
+            const response = await axios.post('https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/store/product', productToAdd);
             console.log("Response from Lambda:", response.data);
             return response.data;
         } catch (error) {
@@ -158,8 +159,6 @@ const StoreInventory = ({storeId, storeName}) => {
 
             setProducts([...products, {...newProduct, id: Date.now()}]);
             console.log("new product: ", newProduct);
-            console.log("all products: ", products);
-
             const productToAdd = {
                 store_id: storeId,
                 product_name: newProduct.name,
