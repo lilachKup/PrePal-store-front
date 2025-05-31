@@ -92,9 +92,10 @@ const StoreOrder = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    order: order.id,
-                    store_id: storeId,
+                    order_num: order.id,    // לא `order`, אלא `order_num`!
+                    store_id: storeId
                 }),
+
             });
             if (!response.ok) {
                 console.error("❌ Error deleting order from store:", response.statusText);
