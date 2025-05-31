@@ -97,6 +97,10 @@ const StoreOrder = () => {
                     store_id: storeId,
                 }),
             });
+            if (!response.ok) {
+                console.error("❌ Error deleting order from store:", response.statusText);
+            }
+            console.log("✅ Order deleted from store successfully");
 
             //todo send mail to customer if order will not be ready
             //todo send delete order from store
