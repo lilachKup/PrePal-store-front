@@ -1,9 +1,7 @@
 import React, {useEffect, useState} from "react";
 import "./StoreOrder.css";
-import {io} from "socket.io-client";
 import {useNavigate} from "react-router-dom";
 import {useLocation} from 'react-router-dom';
-
 
 const StoreOrder = () => {
     const navigate = useNavigate();
@@ -44,7 +42,7 @@ const StoreOrder = () => {
 
         fetchOrders();
 
-        intervalId = setInterval(fetchOrders, 5000);
+        intervalId = setInterval(fetchOrders, 1000);
 
         return () => clearInterval(intervalId);
 
@@ -59,7 +57,7 @@ const StoreOrder = () => {
             location: order.customer_Location,
             customerMail: order.customer_mail,
             street: "",
-            status: "pending",
+            status: order.status,
             products: order.items.map(item => {
                 const [name, quantity] = item.split(":").map(s => s.trim());
                 return {name, quantity: parseInt(quantity, 10)};
@@ -77,92 +75,115 @@ const StoreOrder = () => {
         }));
     };
 
-    const handleStatusChange = (order, status) => {
-        if (status === "ready") {
-            setOrders((prev) =>
-                prev.map((o) => (o.id === order.id ? {...order, status} : o))
-            );
-            //todo send mail to customer if order is ready
-        }
-        else {
-            setOrders((prev) => prev.filter((o) => o.id !== order.id));
-            //todo send mail to customer if order will not be ready
-            //todo send delete order from store
-        }
+    const handleStatusChange = async (order, status) => {
+        await fetch("https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/updateOrderFromStore", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                order_num: order.id,
+                store_id: storeId,
+                order_status: status, // "ready" or "rejected"
+            }),
+        });
+
+        await fetch("https://2h3yf1xica.execute-api.us-east-1.amazonaws.com/dev/mailToCustomer/infoCustomerAboutOrder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                customerMail: order.customerMail,
+                customerName: order.clientName,
+                orderId: order.id,
+                orderInfo: `Dear ${order.clientName},
+
+                Your order is #${order.id} from ${storeName} store.
+
+                Summary:    
+                - Total Price: ₪${order.totalPrice}
+                - Status: ${status === "ready" ? "Ready for delivery" : "Cancelled by store and will not be charged"}
+
+                If you have any questions, please contact us through the PrepPal app.
+
+                This is an automated message — please do not reply.
+
+                Best regards,  
+                PrepPal Team`
+            }),
+        });
     };
 
+        return (
 
-    return (
+            <div className="store-orders-wrapper">
+                <button onClick={() => navigate('/inventory')} className="go-to-store-button">
+                    Go to Orders
+                </button>
+                <h2 className="store-title">{storeName} orders </h2>
+                <div className="orders-container">
+                    {orders.length === 0 ? (
+                        <p>no orders </p>
+                    ) : (
+                        orders.map((order) => (
+                            <div key={order.id} className={`order-card ${expandedOrders[order.id] ? "expanded" : ""}`}>
+                                <h3>Order #{order.id}</h3>
+                                <p>
+                                    <strong>Name:</strong> {order.clientName}
+                                </p>
+                                <p>
+                                    <strong>Price:</strong> ₪{order.totalPrice}
+                                </p>
+                                <p>
+                                    <strong>Location:</strong> {order.location}, {order.street}
+                                </p>
+                                <p>
+                                    <strong>Status:</strong> {order.status}
+                                </p>
+                                <p>
+                                    <strong>Email:</strong> {order.customerMail}
+                                </p>
 
-        <div className="store-orders-wrapper">
-            <button onClick={() => navigate('/inventory')} className="go-to-store-button">
-                Go to Orders
-            </button>
-            <h2 className="store-title">{storeName} orders </h2>
-            <div className="orders-container">
-                {orders.length === 0 ? (
-                    <p>no orders </p>
-                ) : (
-                    orders.map((order) => (
-                        <div key={order.id} className={`order-card ${expandedOrders[order.id] ? "expanded" : ""}`}>
-                            <h3>Order #{order.id}</h3>
-                            <p>
-                                <strong>Name:</strong> {order.clientName}
-                            </p>
-                            <p>
-                                <strong>Price:</strong> ₪{order.totalPrice}
-                            </p>
-                            <p>
-                                <strong>Location:</strong> {order.location}, {order.street}
-                            </p>
-                            <p>
-                                <strong>Status:</strong> {order.status}
-                            </p>
-                            <p>
-                                <strong>Email:</strong> {order.customerMail}
-                            </p>
+                                <button
+                                    className="toggle-button"
+                                    onClick={() => toggleExpand(order.id)}
+                                >
+                                    {expandedOrders[order.id] ? "Hide Products" : "Show Products"}
+                                </button>
 
-                            <button
-                                className="toggle-button"
-                                onClick={() => toggleExpand(order.id)}
-                            >
-                                {expandedOrders[order.id] ? "Hide Products" : "Show Products"}
-                            </button>
+                                {expandedOrders[order.id] && (
+                                    <div className="product-grid">
+                                        {order.products.map((p, idx) => (
+                                            <div key={idx} className="product-chip">
+                                                <span className="product-name">{p.name}</span>
+                                                <span className="product-qty">× {p.quantity}</span>
+                                            </div>
+                                        ))}
+                                    </div>
 
-                            {expandedOrders[order.id] && (
-                                <div className="product-grid">
-                                    {order.products.map((p, idx) => (
-                                        <div key={idx} className="product-chip">
-                                            <span className="product-name">{p.name}</span>
-                                            <span className="product-qty">× {p.quantity}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                )}
 
-                            )}
-
-                            {order.status === "pending" && (
-                                <div className="card-buttons">
-                                    <button
-                                        className="ready-btn"
-                                        onClick={() => handleStatusChange(order, "ready")}
-                                    >
-                                        Mark as Ready
-                                    </button>
-                                    <button
-                                        className="reject-btn"
-                                        onClick={() => handleStatusChange(order, "rejected")}
-                                    >
-                                        Reject
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                )}
+                                {order.status === "pending" && (
+                                    <div className="card-buttons">
+                                        <button
+                                            className="ready-btn"
+                                            onClick={() => handleStatusChange(order, "ready")}
+                                        >
+                                            Mark as Ready
+                                        </button>
+                                        <button
+                                            className="reject-btn"
+                                            onClick={() => handleStatusChange(order, "rejected")}
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
-        </div>
-    );
-};
+        );
+    };
 
 export default StoreOrder;
