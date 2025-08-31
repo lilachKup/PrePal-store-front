@@ -91,7 +91,7 @@ export default function RegisterForm() {
           await createMarketInDB({
             store_id: result.userSub,
             name: storeName,
-            address: `${city}, ${street}, ${houseNumber}`,
+            address: `${street} ${houseNumber}, ${city}`,
             email,
             storeHours
           });
@@ -124,11 +124,12 @@ export default function RegisterForm() {
           location: address,
           email,
           store_hours: storeHours,
-
-          store_coordinates: `${coordinatesFromAddress.lat},${coordinatesFromAddress.lon}`
+          store_coordinates: `${coordinatesFromAddress.latitude},${coordinatesFromAddress.longitude}`
           //coordinates: `${check.lat},${check.lon}`
         })
       });
+      console.log(coordinatesFromAddress);
+        console.log(address);
 
       if (!res.ok) {
         const err = await res.json();
@@ -143,6 +144,7 @@ export default function RegisterForm() {
   };
   const getCoordinatesFromAddress = async (address) => {
     const response = await fetch(`https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/location?address=${address}`);
+
     if (!response.ok) {
       throw new Error("Failed to fetch coordinates");
     }
