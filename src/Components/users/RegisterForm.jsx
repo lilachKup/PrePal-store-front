@@ -58,7 +58,7 @@ export default function RegisterForm() {
         closed ? `${day}: Closed` : `${day}: ${open}–${close}`
       ).join(', ');
 
-    if (!email || !password || !phoneNumber || !city || !street || !storeName || !houseNumber || /* !zipCode || */ !storeHours) {
+    if (!email || !password || !phoneNumber || !city || !storeName /* !zipCode || */) {
       setMessage("❌ All fields must be filled");
       return;
     }
