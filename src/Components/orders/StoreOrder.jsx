@@ -76,6 +76,7 @@ const StoreOrder = () => {
     };
 
     const handleStatusChange = async (order, status) => {
+        console.log("order", order);
         await fetch("https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/updateOrderFromStore", {
             method: "POST",
             headers: {
@@ -87,6 +88,21 @@ const StoreOrder = () => {
                 order_status: status, // "ready" or "rejected"
             }),
         });
+
+        //todo update ingrediants fom store if order is ready
+        ///https://oa608utwwh.execute-api.us-east-1.amazonaws.com/dev/decreaseProductsFromStoreAfterSell
+
+        await fetch("https://oa608utwwh.execute-api.us-east-1.amazonaws.com/dev/decreaseProductsFromStoreAfterSell",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    store_id: storeId,
+                    order: order.products.map(p => `${p.name}: ${p.quantity}`)
+                }),
+            })
 
         await fetch("https://2h3yf1xica.execute-api.us-east-1.amazonaws.com/dev/mailToCustomer/infoCustomerAboutOrder", {
             method: "POST",
