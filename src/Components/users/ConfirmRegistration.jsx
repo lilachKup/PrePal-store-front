@@ -4,7 +4,7 @@ import {
   CognitoUser,
   CognitoUserPool
 } from "amazon-cognito-identity-js";
-import { useAuth } from 'react-oidc-context'; // 👈 הוספנו את זה
+import { useAuth } from 'react-oidc-context'; 
 
 const poolData = {
   UserPoolId: "us-east-1_cs31KzbTS",
@@ -17,9 +17,9 @@ export default function ConfirmRegistration() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
-  const auth = useAuth(); // 👈 ניגשנו ל-auth
+  const auth = useAuth();
 
-    useEffect(() => {
+  useEffect(() => {
     const emailFromUrl = new URLSearchParams(window.location.search).get("email");
     if (emailFromUrl) {
       setEmail(emailFromUrl);
@@ -36,11 +36,11 @@ export default function ConfirmRegistration() {
     cognitoUser.confirmRegistration(code, true, (err, result) => {
       if (err) {
         console.error(err);
-        setMessage("❌ " + err.message);
+        setMessage(err.message);
       } else {
-        setMessage("✔️ Email confirmed! Redirecting to login...");
+        setMessage("Email confirmed! Redirecting to login...");
         setTimeout(() => {
-          auth.signinRedirect(); //
+          window.location.href = '/?tab=login';
         }, 1000);
       }
     });
@@ -56,10 +56,10 @@ export default function ConfirmRegistration() {
     cognitoUser.resendConfirmationCode((err, result) => {
       if (err) {
         console.error(err);
-        setMessage("❌ " + err.message);
+        setMessage(err.message);
       } else {
         console.log('Code resent successfully');
-        setMessage("✔️ Verification code resent. Check your email.");
+        setMessage("Verification code resent. Check your email.");
       }
     });
   };
