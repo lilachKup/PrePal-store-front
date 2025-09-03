@@ -35,12 +35,12 @@ export default function ForgotPassword() {
         getUser().forgotPassword({
             onSuccess: (data) => {
                 setBusy(false);
-                setMsg('✔ Code sent. Check your email.');
+                setMsg('Code sent. Check your email.');
                 setPhase('confirm');
             },
             onFailure: (err) => {
                 setBusy(false);
-                setMsg(`❌ ${err?.message || 'Failed to send code'}`);
+                setMsg(`${err?.message || 'Failed to send code'}`);
             }
         });
     };
