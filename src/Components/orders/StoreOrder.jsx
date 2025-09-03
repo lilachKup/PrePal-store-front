@@ -1,34 +1,29 @@
+// src/components/store/StoreOrder.jsx
 import React, {useEffect, useState} from "react";
 import "./StoreOrder.css";
 import {useNavigate} from "react-router-dom";
-import {useLocation} from 'react-router-dom';
+import {requireStoreSessionOrRedirect} from "../utils/storeSession";
+import TopBar from "../Bar/TopBar";
+
 
 const StoreOrder = () => {
     const navigate = useNavigate();
-
-    const location = useLocation();
-    const {storeId, storeName} = location.state || {};
-
-    console.log("storeId", storeId);
-    console.log("storeName", storeName);
+    const session = requireStoreSessionOrRedirect();
+    const storeId = session?.storeId;
+    const storeName = session?.storeName;
 
     const [orders, setOrders] = useState([]);
     const [expandedOrders, setExpandedOrders] = useState({});
 
-
     useEffect(() => {
-        let intervalId;
+        if (!storeId) return;
 
+        let intervalId;
         const fetchOrders = async () => {
             try {
-                const response = await fetch(`https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/getAllOrdersFromStore/${storeId}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    });
-
+                const response = await fetch(
+                    `https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/getAllOrdersFromStore/${storeId}`
+                );
                 const data = await response.json();
                 if (!data.orders) {
                     console.log("❌ No orders found");
@@ -41,16 +36,12 @@ const StoreOrder = () => {
         };
 
         fetchOrders();
-
         intervalId = setInterval(fetchOrders, 1000);
-
         return () => clearInterval(intervalId);
-
     }, [storeId]);
 
-
     const seperateOrders = (allOrdersFromStore) => {
-        const formattedOrders = allOrdersFromStore.map(order => ({
+        const formatted = allOrdersFromStore.map(order => ({
             id: order.order_num,
             clientName: order.customer_name,
             totalPrice: order.total_price,
@@ -63,106 +54,80 @@ const StoreOrder = () => {
                 return {name, quantity: parseInt(quantity, 10)};
             })
         }));
-
-        setOrders(formattedOrders);
+        setOrders(formatted);
     };
 
-
     const toggleExpand = (id) => {
-        setExpandedOrders((prev) => ({
-            ...prev,
-            [id]: !prev[id],
-        }));
+        setExpandedOrders(prev => ({...prev, [id]: !prev[id]}));
     };
 
     const handleStatusChange = async (order, status) => {
-        console.log("order", order);
         await fetch("https://yv6baxe2i0.execute-api.us-east-1.amazonaws.com/dev/updateOrderFromStore", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 order_num: order.id,
                 store_id: storeId,
-                order_status: status, // "ready" or "rejected"
+                order_status: status,
             }),
         });
 
-        //todo update ingrediants fom store if order is ready
-        ///https://oa608utwwh.execute-api.us-east-1.amazonaws.com/dev/decreaseProductsFromStoreAfterSell
-
-        await fetch("https://oa608utwwh.execute-api.us-east-1.amazonaws.com/dev/decreaseProductsFromStoreAfterSell",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    store_id: storeId,
-                    order: order.products.map(p => `${p.name}: ${p.quantity}`)
-                }),
-            })
+        await fetch("https://oa608utwwh.execute-api.us-east-1.amazonaws.com/dev/decreaseProductsFromStoreAfterSell", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                store_id: storeId,
+                order: order.products.map(p => `${p.name}: ${p.quantity}`)
+            }),
+        });
 
         await fetch("https://2h3yf1xica.execute-api.us-east-1.amazonaws.com/dev/mailToCustomer/infoCustomerAboutOrder", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 customerMail: order.customerMail,
                 customerName: order.clientName,
                 orderId: order.id,
                 orderInfo: `Dear ${order.clientName},
 
-                Your order is #${order.id} from ${storeName} store.
+Your order is #${order.id} from ${storeName} store.
 
-                Summary:    
-                - Total Price: ₪${order.totalPrice}
-                - Status: ${status === "ready" ? "Ready for delivery" : "Cancelled by store and will not be charged"}
+Summary:
+- Total Price: ₪${order.totalPrice}
+- Status: ${status === "ready" ? "Ready for delivery" : "Cancelled by store and will not be charged"}
 
-                If you have any questions, please contact us through the PrepPal app.
+If you have any questions, please contact us through the PrepPal app.
 
-                This is an automated message — please do not reply.
+This is an automated message — please do not reply.
 
-                Best regards,  
-                PrepPal Team`
+Best regards,
+PrepPal Team`
             }),
         });
     };
 
-        return (
+    if (!session) return null;
 
+    return (
+        <>
+            <TopBar/>
             <div className="store-orders-wrapper">
-                <button onClick={() => navigate('/inventory')} className="go-to-store-button">
-                    Go to Orders
-                </button>
-                <h2 className="store-title">{storeName} orders </h2>
+
+                <h2 className="store-title">{storeName} orders</h2>
                 <div className="orders-container">
                     {orders.length === 0 ? (
-                        <p>no orders </p>
+                        <p>no orders</p>
                     ) : (
                         orders.map((order) => (
                             <div key={order.id} className={`order-card ${expandedOrders[order.id] ? "expanded" : ""}`}>
                                 <h3>Order #{order.id}</h3>
-                                <p>
-                                    <strong>Name:</strong> {order.clientName}
-                                </p>
-                                <p>
-                                    <strong>Price:</strong> ₪{order.totalPrice}
-                                </p>
-                                <p>
-                                    <strong>Location:</strong> {order.location}, {order.street}
-                                </p>
-                                <p>
-                                    <strong>Status:</strong> {order.status}
-                                </p>
-                                <p>
-                                    <strong>Email:</strong> {order.customerMail}
-                                </p>
+                                <p><strong>Name:</strong> {order.clientName}</p>
+                                <p><strong>Price:</strong> ₪{order.totalPrice}</p>
+                                <p><strong>Location:</strong> {order.location}, {order.street}</p>
+                                <p><strong>Status:</strong> {order.status}</p>
+                                <p><strong>Email:</strong> {order.customerMail}</p>
 
-                                <button
-                                    className="toggle-button"
-                                    onClick={() => toggleExpand(order.id)}
-                                >
+                                <button className="toggle-button" onClick={() => toggleExpand(order.id)}>
                                     {expandedOrders[order.id] ? "Hide Products" : "Show Products"}
                                 </button>
 
@@ -175,21 +140,16 @@ const StoreOrder = () => {
                                             </div>
                                         ))}
                                     </div>
-
                                 )}
 
                                 {order.status === "pending" && (
                                     <div className="card-buttons">
-                                        <button
-                                            className="ready-btn"
-                                            onClick={() => handleStatusChange(order, "ready")}
-                                        >
+                                        <button className="ready-btn"
+                                                onClick={() => handleStatusChange(order, "ready")}>
                                             Mark as Ready
                                         </button>
-                                        <button
-                                            className="reject-btn"
-                                            onClick={() => handleStatusChange(order, "rejected")}
-                                        >
+                                        <button className="reject-btn"
+                                                onClick={() => handleStatusChange(order, "rejected")}>
                                             Reject
                                         </button>
                                     </div>
@@ -199,7 +159,8 @@ const StoreOrder = () => {
                     )}
                 </div>
             </div>
-        );
-    };
+        </>
+    );
+};
 
 export default StoreOrder;
