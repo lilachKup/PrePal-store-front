@@ -36,7 +36,9 @@ const TopBar = () => {
             <h2 className="logo">{storeName}</h2>
             <div className="actions">
                 <button onClick={handleLogout}>Logout</button>
-                <button onClick={() => alert("Profile pressed")}>Profile</button>
+                {location.pathname !=="/home" &&
+                <button onClick={() => navigate("/home")}>Store Info</button>
+                }
                 <button onClick={() => navigate( location.pathname === '/inventory' ?"/orders" : "/inventory" )}>
                     {location.pathname === '/inventory' ? "orders" : "inventory store"}</button>
             </div>

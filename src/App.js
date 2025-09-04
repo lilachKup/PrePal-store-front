@@ -7,6 +7,7 @@ import { useAuth } from 'react-oidc-context';
 import ConfirmRegistration from "./Components/users/ConfirmRegistration";
 import StoreOrder from './Components/orders/StoreOrder';
 import ForgotPassword from "./Components/users/ForgotPassword";
+import HomePage from "./Components/Home/HomePage";
 
 function App() {
   const auth = useAuth();
@@ -27,6 +28,19 @@ function App() {
       <Route path="/confirm" element={<ConfirmRegistration />} />
       <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/callback" element={<CallbackPage />} />
+        <Route
+            path="/home"
+            element={
+                effectiveUser ? (
+                    <HomePage
+                        storeId={(effectiveUser.sub)}
+                    />
+                ) : (
+                    // במקום להיתקע על Loading, מחזירים לדף הראשי
+                    <Navigate to="/" replace />
+                )
+            }
+        />
 
       <Route
         path="/inventory"

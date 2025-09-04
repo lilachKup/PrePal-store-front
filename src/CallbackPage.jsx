@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 import { useNavigate } from "react-router-dom";
 
+
 export default function CallbackPage() {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -14,7 +15,9 @@ export default function CallbackPage() {
 
         if (userId) {
           console.log("✅ Logged in, redirecting to store menu with ID:", userId);
-          navigate("/inventory", { replace: true });
+          //navigate("/inventory", { replace: true });
+          navigate("/home", { replace: true });
+
         } else {
           console.warn("⚠️ Logged in but no user ID found in profile");
           navigate("/", { replace: true });

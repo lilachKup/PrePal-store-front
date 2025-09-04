@@ -32,7 +32,7 @@ export default function LoginForm() {
           email: p.email,
           idToken: idToken.getJwtToken()
         }));
-        window.location.href = '/inventory';
+        window.location.href = '/home';
       },
       onFailure: (err) => {
         setBusy(false);
