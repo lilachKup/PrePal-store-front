@@ -24,3 +24,59 @@
 .topbar .actions button:hover {
     background: #ddd;
 }
+
+.topbar .actions button {
+    margin-left: 10px;
+    padding: 6px 20px;  /* כאן נקבע הגובה והרוחב */
+    border: none;
+    border-radius: 6px;
+    background: white;
+    color: #6a0dad;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;   /* 👈 זה ממקם את כל התוכן באמצע אנכית */
+    background-color: #6a0dad;
+    color: white;
+    height: 60px;
+    padding: 0 20px;
+}
+
+
+/* הרמה קלה של כל קבוצת הכפתורים בלי לשנות גודל כפתור */
+.topbar .actions {
+  position: relative;
+  top: -8px;        /* נסי בין -2px ל- -6px עד שייראה לך מושלם */
+  display: flex;    /* לשמור על פריסה אופקית */
+  align-items: center;
+}
+
+/* כותרת + לוגו */
+.topbar .logo {
+  margin: 0;
+  display: inline-flex;      /* מאפשר יישור אנכי עם התמונה */
+  align-items: center;       /* מיושר אנכית */
+  gap: 8px;                  /* רווח בין הטקסט ללוגו */
+  font-weight: 800;
+}
+
+/* תמונת הלוגו */
+.topbar .logo-image {
+  height: 50px;              /* קטן מגובה הטופ־בר (60px) כדי להיראות מדויק */
+  width: auto;               /* שומר פרופורציות */
+  vertical-align: middle;
+  -webkit-user-drag: none;   /* לא לגרור בטעות */
+  user-select: none;
+}
+
+/* אופציונלי: במסכים קטנים להקטין מעט */
+@media (max-width: 420px) {
+  .topbar .logo-image { height: 24px; }
+}
+
+
+

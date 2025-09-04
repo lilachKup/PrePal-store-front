@@ -57,10 +57,10 @@ export default function RegisterForm() {
 
   // sanitize store name
   const sanitizeText = (txt) =>
-      (txt || '')
-          .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
-          .replace(/[^\p{L}\p{N}\s'-]/gu, '')
-          .trim();
+    (txt || '')
+      .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+      .replace(/[^\p{L}\p{N}\s'-]/gu, '')
+      .trim();
 
   // change hours helper
   const handleHoursChange = (day, updated) => {
@@ -69,28 +69,28 @@ export default function RegisterForm() {
 
   // format hours to single string
   const buildStoreHoursString = () =>
-      Object.entries(openingHours)
-          .map(([day, { open, close, closed }]) =>
-              closed ? `${day}: Closed` : `${day}: ${open}–${close}`
-          )
-          .join(', ');
+    Object.entries(openingHours)
+      .map(([day, { open, close, closed }]) =>
+        closed ? `${day}: Closed` : `${day}: ${open}–${close}`
+      )
+      .join(', ');
 
   // create market call (expects coords from validateILAddress)
   const createMarketInDB = async ({ store_id, name, address, email, storeHours, coords }) => {
     const res = await fetch(
-        "https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            store_id,
-            name,
-            location: address,
-            email,
-            store_hours: storeHours,
-            store_coordinates: `${coords.lat},${coords.lng}`
-          })
-        }
+      "https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          store_id,
+          name,
+          location: address,
+          email,
+          store_hours: storeHours,
+          store_coordinates: `${coords.lat},${coords.lng}`
+        })
+      }
     );
 
     if (!res.ok) {
@@ -106,6 +106,7 @@ export default function RegisterForm() {
     setAddressError('');
     setShowLoginButton(false);
 
+
     // 1) basic client validations
     if (!/^\d{9}$/.test(phoneNumber)) {
       setMessage("Invalid phone number (must be 9 digits)");
@@ -113,6 +114,17 @@ export default function RegisterForm() {
     }
 
     const cleanStoreName = sanitizeText(storeName);
+
+    for (const [day, { open, close, closed }] of Object.entries(openingHours)) {
+      if (!closed && open && close && open > close) {
+        setMessage(`${day}: Opening time cannot be later than closing time`);
+        return;
+      }
+      else if (!closed && (open === '' || close === '')) {
+        setMessage(`${day}: Please fill in both opening and closing times, or mark as closed`);
+        return;
+      }
+    }
 
     // 2) build hours string
     const storeHours = buildStoreHoursString();
@@ -190,151 +202,151 @@ export default function RegisterForm() {
   };
 
   return (
-      <form className="register-form" onSubmit={handleRegister}>
-        <h2 className="form-title">Store Sign Up</h2>
+    <form className="register-form" onSubmit={handleRegister}>
+      <h2 className="form-title">Store Sign Up</h2>
 
-        <label>
-          Email <span className="req" aria-hidden="true">*</span>
-        </label>
+      <label>
+        Email <span className="req" aria-hidden="true">*</span>
+      </label>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="form-input"
+        required
+      />
+
+      <label>Password:<span className="req" aria-hidden="true">*</span>
+      </label>
+      <div className="password-container">
         <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="form-input"
-            required
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="form-input password-input"
+          required
         />
-
-        <label>Password:<span className="req" aria-hidden="true">*</span>
-        </label>
-        <div className="password-container">
-          <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-input password-input"
-              required
-          />
-          <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
+        <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
           {showPassword ? "🙈" : "👁"}
         </span>
+      </div>
+
+      <label>Phone number:<span className="req" aria-hidden="true">*</span>
+      </label>
+      <div className="phone-container">
+        <span className="phone-prefix">+972</span>
+        <input
+          type="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+          maxLength={9}
+          className="phone-input"
+          required
+        />
+      </div>
+
+      {/* Address (3 inputs) */}
+      <label>City:
+        <span className="req" aria-hidden="true">*</span></label>
+      <input
+        type="text"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
+        className={`form-input ${addressError ? 'input-error' : ''}`}
+        required
+      />
+
+      <label>Street:</label>
+      <input
+        type="text"
+        value={street}
+        onChange={(e) => setStreet(e.target.value)}
+        className={`form-input ${addressError ? 'input-error' : ''}`}
+
+      />
+
+      <label>House Number:</label>
+      <input
+        type="text"
+        value={houseNumber}
+        onChange={(e) => setHouseNumber(e.target.value)}
+        className={`form-input ${addressError ? 'input-error' : ''}`}
+
+      />
+
+      {/* Inline address error (keeps user inputs) */}
+      {addressError && (
+        <p className="form-message error">{addressError}</p>
+      )}
+
+      <label>Store name:<span className="req" aria-hidden="true">*</span>
+      </label>
+      <input
+        type="text"
+        value={storeName}
+        onChange={(e) => setStoreName(e.target.value)}
+        className="form-input"
+        required
+      />
+
+      {/* Opening hours */}
+      <div className="opening-hours-box">
+        <h3>Opening Hours<span className="req" aria-hidden="true">*</span>
+        </h3>
+        {Object.entries(openingHours).map(([day, { open, close, closed }]) => (
+          <div key={day} className="day-hours-row">
+            <label>{day}:</label>
+            <select
+              value={open}
+              onChange={(e) => handleHoursChange(day, { open: e.target.value, close, closed })}
+              disabled={closed}
+              className="form-select"
+            >
+              {hoursOptions.map((hour) => (
+                <option key={hour} value={hour}>{hour}</option>
+              ))}
+            </select>
+            <span>to</span>
+            <select
+              value={close}
+              onChange={(e) => handleHoursChange(day, { open, close: e.target.value, closed })}
+              disabled={closed}
+              className="form-select"
+            >
+              {hoursOptions.map((hour) => (
+                <option key={hour} value={hour}>{hour}</option>
+              ))}
+            </select>
+            <label style={{ marginLeft: '10px' }}>
+              <input
+                type="checkbox"
+                checked={closed}
+                onChange={(e) => handleHoursChange(day, { open: '', close: '', closed: e.target.checked })}
+              /> Closed
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <button type="submit" className="submit-btn">Sign Up</button>
+
+      <p className="form-message">{message}</p>
+
+      {showLoginButton && (
+        <div style={{ textAlign: 'center', marginTop: '5px' }}>
+          <button
+            type="button"
+            className="login-btn"
+            onClick={handleLoginButton}
+          >
+            Log In
+          </button>
         </div>
+      )}
 
-        <label>Phone number:<span className="req" aria-hidden="true">*</span>
-        </label>
-        <div className="phone-container">
-          <span className="phone-prefix">+972</span>
-          <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-              maxLength={9}
-              className="phone-input"
-              required
-          />
-        </div>
-
-        {/* Address (3 inputs) */}
-        <label>City:
-          <span className="req" aria-hidden="true">*</span></label>
-        <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className={`form-input ${addressError ? 'input-error' : ''}`}
-            required
-        />
-
-        <label>Street:</label>
-        <input
-            type="text"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            className={`form-input ${addressError ? 'input-error' : ''}`}
-
-        />
-
-        <label>House Number:</label>
-        <input
-            type="text"
-            value={houseNumber}
-            onChange={(e) => setHouseNumber(e.target.value)}
-            className={`form-input ${addressError ? 'input-error' : ''}`}
-
-        />
-
-        {/* Inline address error (keeps user inputs) */}
-        {addressError && (
-            <p className="form-message error">{addressError}</p>
-        )}
-
-        <label>Store name:<span className="req" aria-hidden="true">*</span>
-        </label>
-        <input
-            type="text"
-            value={storeName}
-            onChange={(e) => setStoreName(e.target.value)}
-            className="form-input"
-            required
-        />
-
-        {/* Opening hours */}
-        <div className="opening-hours-box">
-          <h3>Opening Hours<span className="req" aria-hidden="true">*</span>
-          </h3>
-          {Object.entries(openingHours).map(([day, { open, close, closed }]) => (
-              <div key={day} className="day-hours-row">
-                <label>{day}:</label>
-                <select
-                    value={open}
-                    onChange={(e) => handleHoursChange(day, { open: e.target.value, close, closed })}
-                    disabled={closed}
-                    className="form-select"
-                >
-                  {hoursOptions.map((hour) => (
-                      <option key={hour} value={hour}>{hour}</option>
-                  ))}
-                </select>
-                <span>to</span>
-                <select
-                    value={close}
-                    onChange={(e) => handleHoursChange(day, { open, close: e.target.value, closed })}
-                    disabled={closed}
-                    className="form-select"
-                >
-                  {hoursOptions.map((hour) => (
-                      <option key={hour} value={hour}>{hour}</option>
-                  ))}
-                </select>
-                <label style={{ marginLeft: '10px' }}>
-                  <input
-                      type="checkbox"
-                      checked={closed}
-                      onChange={(e) => handleHoursChange(day, { open: '', close: '', closed: e.target.checked })}
-                  /> Closed
-                </label>
-              </div>
-          ))}
-        </div>
-
-        <button type="submit" className="submit-btn">Sign Up</button>
-
-        <p className="form-message">{message}</p>
-
-        {showLoginButton && (
-            <div style={{ textAlign: 'center', marginTop: '5px' }}>
-              <button
-                  type="button"
-                  className="login-btn"
-                  onClick={handleLoginButton}
-              >
-                Log In
-              </button>
-            </div>
-        )}
-
-        {registrationSuccess && (
-            <p className="form-message">Please check your email to confirm</p>
-        )}
-      </form>
+      {registrationSuccess && (
+        <p className="form-message">Please check your email to confirm</p>
+      )}
+    </form>
   );
 }
