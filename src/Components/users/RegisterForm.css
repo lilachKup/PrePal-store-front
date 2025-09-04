@@ -214,3 +214,19 @@ forgot-password-link,
 }
 
 
+/* RegisterForm.css (add) */
+.input-error {
+  border-color: #e53935 !important;
+  box-shadow: 0 0 0 2px rgba(229,57,53,0.15);
+}
+.form-message.error {
+  color: #e53935;
+  margin-top: 4px;
+}
+.req {
+  color: #e53935;
+  margin-left: 4px;
+  font-weight: 600;
+  font-size: 0.95em;
+  line-height: 1;
+}

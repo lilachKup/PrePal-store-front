@@ -1,3 +1,4 @@
+// src/Components/users/RegisterForm.jsx
 import React, { useState } from 'react';
 import {
   CognitoUserPool,
@@ -5,7 +6,11 @@ import {
 } from 'amazon-cognito-identity-js';
 import './RegisterForm.css';
 import { useAuth } from 'react-oidc-context';
-
+import {
+  validateILAddress,
+  formatAddress,
+  geoErrorToMessage,
+} from '../utils/checkValidAddress';
 
 const poolData = {
   UserPoolId: 'us-east-1_cs31KzbTS',
@@ -21,21 +26,25 @@ const hoursOptions = [
 ];
 
 export default function RegisterForm() {
-
   const auth = useAuth();
+
+  // auth + form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [storeName, setStoreName] = useState('');
   const [message, setMessage] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const [address, setAddress] = useState('');
+  const [showLoginButton, setShowLoginButton] = useState(false);
+
+  // address split to 3 inputs
   const [city, setCity] = useState('');
   const [street, setStreet] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [storeName, setStoreName] = useState('');
-  const [showLoginButton, setShowLoginButton] = useState(false);
+  const [addressError, setAddressError] = useState(''); // show address-specific errors
+
+  // opening hours state
   const [openingHours, setOpeningHours] = useState({
     Sunday: { open: '', close: '', closed: false },
     Monday: { open: '', close: '', closed: false },
@@ -46,37 +55,93 @@ export default function RegisterForm() {
     Saturday: { open: '', close: '', closed: false }
   });
 
+  // sanitize store name
   const sanitizeText = (txt) =>
-    (txt || '')
-      .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
-      .replace(/[^\p{L}\p{N}\s'-]/gu, '')
-      .trim();
+      (txt || '')
+          .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+          .replace(/[^\p{L}\p{N}\s'-]/gu, '')
+          .trim();
 
-
+  // change hours helper
   const handleHoursChange = (day, updated) => {
-    setOpeningHours((prev) => ({
-      ...prev,
-      [day]: updated
-    }));
+    setOpeningHours((prev) => ({ ...prev, [day]: updated }));
   };
 
-  const handleRegister = (e) => {
+  // format hours to single string
+  const buildStoreHoursString = () =>
+      Object.entries(openingHours)
+          .map(([day, { open, close, closed }]) =>
+              closed ? `${day}: Closed` : `${day}: ${open}–${close}`
+          )
+          .join(', ');
 
+  // create market call (expects coords from validateILAddress)
+  const createMarketInDB = async ({ store_id, name, address, email, storeHours, coords }) => {
+    const res = await fetch(
+        "https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            store_id,
+            name,
+            location: address,
+            email,
+            store_hours: storeHours,
+            store_coordinates: `${coords.lat},${coords.lng}`
+          })
+        }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to create market");
+    }
+  };
+
+  // submit register
+  const handleRegister = async (e) => {
     e.preventDefault();
+    setMessage('');
+    setAddressError('');
+    setShowLoginButton(false);
 
-    const cleanStoreName = sanitizeText(storeName);
-
-    const storeHours = Object.entries(openingHours)
-      .map(([day, { open, close, closed }]) =>
-        closed ? `${day}: Closed` : `${day}: ${open}–${close}`
-      ).join(', ');
-
-
+    // 1) basic client validations
     if (!/^\d{9}$/.test(phoneNumber)) {
       setMessage("Invalid phone number (must be 9 digits)");
       return;
     }
 
+    const cleanStoreName = sanitizeText(storeName);
+
+    // 2) build hours string
+    const storeHours = buildStoreHoursString();
+
+    // 3) validate address in Israel (via utils)
+    const addressStr = formatAddress({
+      city,
+      street: `${street} ${houseNumber}`,
+      apt: ""
+    });
+
+    let coords;
+    try {
+      const { coords: _coords } = await validateILAddress({
+        city,
+        street: `${street} ${houseNumber}`,
+        apt: ""
+      });
+      coords = _coords; // {lat,lng}
+    } catch (err) {
+      // Address is invalid / outside Israel -> DO NOT clear user inputs
+      const msg = geoErrorToMessage(err);
+      setAddressError(msg);
+      setMessage(msg);
+      // keep city/street/houseNumber so user can fix typos
+      return;
+    }
+
+    // 4) sign up in Cognito
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
       new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}` }),
@@ -86,220 +151,190 @@ export default function RegisterForm() {
     userPool.signUp(email, password, attributes, null, async (err, result) => {
       if (err) {
         console.error(err);
-        setMessage(err.message);
+        setMessage(err.message || "Sign up failed");
 
         if (err.code === 'UsernameExistsException') {
+          // If user already exists, show login button
           setShowLoginButton(true);
         }
-      } else {
-        console.log('✔️ Registered successfully', result);
+        return;
+      }
+
+      // 5) insert market to DB with verified coords
+      try {
+        await createMarketInDB({
+          store_id: result.userSub,
+          name: cleanStoreName,
+          address: addressStr,
+          email,
+          storeHours,
+          coords
+        });
+
         setMessage('Registered successfully!');
         setRegistrationSuccess(true);
 
-        try {
-          await createMarketInDB({
-            store_id: result.userSub,
-            name: cleanStoreName,
-            address: `${street} ${houseNumber}, ${city}`,
-            email,
-            storeHours
-          });
-
-          console.log("🏪 Market created successfully in DB");
-
-          setTimeout(() => {
-            window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
-          }, 500);
-
-        } catch (err) {
-          console.error("❌ Error creating market in DB:", err);
-          setMessage("Failed to create market. Please try again.");
-        }
+        setTimeout(() => {
+          window.location.href = `/confirm?email=${encodeURIComponent(email)}`;
+        }, 500);
+      } catch (dbErr) {
+        console.error("❌ Error creating market in DB:", dbErr);
+        setMessage("Failed to create market. Please try again.");
       }
     });
   };
 
-  const createMarketInDB = async ({ store_id, name, address, email, storeHours }) => {
-    try {
-      const coordinatesFromAddress = await getCoordinatesFromAddress(address);
-      //let check = await fetch ("https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/location?address=Aza 25, Tel Aviv");
-      //console.log(check);
-      //check = await check.json();
-      const res = await fetch("https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/createNewMarket", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          store_id,
-          name,
-          location: address,
-          email,
-          store_hours: storeHours,
-          store_coordinates: `${coordinatesFromAddress.latitude},${coordinatesFromAddress.longitude}`
-          //coordinates: `${check.lat},${check.lon}`
-        })
-      });
-      console.log(coordinatesFromAddress);
-      console.log(address);
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create market");
-      }
-
-      console.log("🏪 Market successfully created in DB");
-    } catch (err) {
-      console.error("❌ Error creating market in DB:", err);
-      throw err;
-    }
-  };
-  const getCoordinatesFromAddress = async (address) => {
-    const response = await fetch(`https://zukr2k1std.execute-api.us-east-1.amazonaws.com/dev/location?address=${address}`);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch coordinates");
-    }
-    const data = await response.json();
-    console.log(data);
-    return data;
-  }
-
   const handleLoginButton = () => {
+    // This button only appears for UsernameExistsException; no address validation needed here
     window.location.href = '/?tab=login';
   };
 
   return (
-    <form className="register-form" onSubmit={handleRegister}>
+      <form className="register-form" onSubmit={handleRegister}>
+        <h2 className="form-title">Store Sign Up</h2>
 
-      <h2 className="form-title">Store Sign Up</h2>
-
-      <label>Email:</label>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="form-input"
-        required
-      />
-
-      <label>Password:</label>
-      <div className="password-container">
+        <label>
+          Email <span className="req" aria-hidden="true">*</span>
+        </label>
         <input
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="form-input password-input"
-          required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="form-input"
+            required
         />
-        <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
+
+        <label>Password:<span className="req" aria-hidden="true">*</span>
+        </label>
+        <div className="password-container">
+          <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="form-input password-input"
+              required
+          />
+          <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
           {showPassword ? "🙈" : "👁"}
         </span>
-      </div>
-
-      <label>Phone number:</label>
-      <div className="phone-container">
-        <span className="phone-prefix">+972</span>
-        <input
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-          maxLength={9}
-          className="phone-input"
-          required
-        />
-      </div>
-
-      <label>City:</label>
-      <input
-        type="text"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        className="form-input"
-        required
-      />
-
-      <label>Street:</label>
-      <input
-        type="text"
-        value={street}
-        onChange={(e) => setStreet(e.target.value)}
-        className="form-input"
-      />
-
-      <label>House Number:</label>
-      <input
-        type="text"
-        value={houseNumber}
-        onChange={(e) => setHouseNumber(e.target.value)}
-        className="form-input"
-      />
-
-      <label>Store name:</label>
-      <input
-        type="text"
-        value={storeName}
-        onChange={(e) => setStoreName(e.target.value)}
-        className="form-input"
-        required
-      />
-
-      {/*<label>Opening hours:</label>*/}
-      <div className="opening-hours-box">
-        <h3>Opening Hours</h3>
-        {Object.entries(openingHours).map(([day, { open, close, closed }]) => (
-          <div key={day} className="day-hours-row">
-            <label>{day}:</label>
-            <select
-              value={open}
-              onChange={(e) => handleHoursChange(day, { open: e.target.value, close, closed })}
-              disabled={closed}
-              className="form-select"
-            >
-              {hoursOptions.map((hour) => (
-                <option key={hour} value={hour}>{hour}</option>
-              ))}
-            </select>
-            <span>to</span>
-            <select
-              value={close}
-              onChange={(e) => handleHoursChange(day, { open, close: e.target.value, closed })}
-              disabled={closed}
-              className="form-select"
-            >
-              {hoursOptions.map((hour) => (
-                <option key={hour} value={hour}>{hour}</option>
-              ))}
-            </select>
-            <label style={{ marginLeft: '10px' }}>
-              <input
-                type="checkbox"
-                checked={closed}
-                onChange={(e) => handleHoursChange(day, { open: '', close: '', closed: e.target.checked })}
-              /> Closed
-            </label>
-          </div>
-        ))}
-
-      </div>
-
-      <button type="submit" className="submit-btn">Sign Up</button>
-
-      <p className="form-message">{message}</p>
-
-      {showLoginButton && (
-        <div style={{ textAlign: 'center', marginTop: '5px' }}>
-          <button
-            type="button"
-            className="login-btn"
-            onClick={handleLoginButton}>
-            Log In
-          </button>
         </div>
-      )}
 
-      {registrationSuccess && (
-        <p className="form-message">Please check your email to confirm</p>
-      )}
-    </form>
+        <label>Phone number:<span className="req" aria-hidden="true">*</span>
+        </label>
+        <div className="phone-container">
+          <span className="phone-prefix">+972</span>
+          <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+              maxLength={9}
+              className="phone-input"
+              required
+          />
+        </div>
+
+        {/* Address (3 inputs) */}
+        <label>City:
+          <span className="req" aria-hidden="true">*</span></label>
+        <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+            required
+        />
+
+        <label>Street:</label>
+        <input
+            type="text"
+            value={street}
+            onChange={(e) => setStreet(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+
+        />
+
+        <label>House Number:</label>
+        <input
+            type="text"
+            value={houseNumber}
+            onChange={(e) => setHouseNumber(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+
+        />
+
+        {/* Inline address error (keeps user inputs) */}
+        {addressError && (
+            <p className="form-message error">{addressError}</p>
+        )}
+
+        <label>Store name:<span className="req" aria-hidden="true">*</span>
+        </label>
+        <input
+            type="text"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            className="form-input"
+            required
+        />
+
+        {/* Opening hours */}
+        <div className="opening-hours-box">
+          <h3>Opening Hours<span className="req" aria-hidden="true">*</span>
+          </h3>
+          {Object.entries(openingHours).map(([day, { open, close, closed }]) => (
+              <div key={day} className="day-hours-row">
+                <label>{day}:</label>
+                <select
+                    value={open}
+                    onChange={(e) => handleHoursChange(day, { open: e.target.value, close, closed })}
+                    disabled={closed}
+                    className="form-select"
+                >
+                  {hoursOptions.map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                  ))}
+                </select>
+                <span>to</span>
+                <select
+                    value={close}
+                    onChange={(e) => handleHoursChange(day, { open, close: e.target.value, closed })}
+                    disabled={closed}
+                    className="form-select"
+                >
+                  {hoursOptions.map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                  ))}
+                </select>
+                <label style={{ marginLeft: '10px' }}>
+                  <input
+                      type="checkbox"
+                      checked={closed}
+                      onChange={(e) => handleHoursChange(day, { open: '', close: '', closed: e.target.checked })}
+                  /> Closed
+                </label>
+              </div>
+          ))}
+        </div>
+
+        <button type="submit" className="submit-btn">Sign Up</button>
+
+        <p className="form-message">{message}</p>
+
+        {showLoginButton && (
+            <div style={{ textAlign: 'center', marginTop: '5px' }}>
+              <button
+                  type="button"
+                  className="login-btn"
+                  onClick={handleLoginButton}
+              >
+                Log In
+              </button>
+            </div>
+        )}
+
+        {registrationSuccess && (
+            <p className="form-message">Please check your email to confirm</p>
+        )}
+      </form>
   );
 }
-
