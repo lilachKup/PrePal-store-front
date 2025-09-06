@@ -131,6 +131,17 @@ export default function HomePage() {
     const handleSave = async () => {
         if (!store && !storeId) return;
 
+        for (const [day, { open, close, closed }] of Object.entries(hoursObj)) {
+            if (!closed && open && close && open > close) {
+                alert(`${day}: Opening time cannot be later than closing time`);
+                return;
+            }
+            else if (!closed && (open === '' || close === '')) {
+                alert(`${day}: Please fill in both opening and closing times, or mark as closed`);
+                return;
+            }
+        }
+
         const locationStr = formatAddress({ city, street, apt }); // single-line string
         const storeHoursStr = formatStoreHours(hoursObj);
 
@@ -295,8 +306,8 @@ export default function HomePage() {
                                         </label>
                                     ) : (
                                         <span className={"readonly " + (row.closed ? "closed" : "")}>
-                      {row.closed ? "Closed" : ""}
-                    </span>
+                                            {row.closed ? "Closed" : ""}
+                                        </span>
                                     )}
                                 </div>
                             </div>
