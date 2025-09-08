@@ -1,4 +1,3 @@
-// src/components/store/StoreOrder.jsx
 import React, {useEffect, useState} from "react";
 import "./StoreOrder.css";
 import {useNavigate} from "react-router-dom";

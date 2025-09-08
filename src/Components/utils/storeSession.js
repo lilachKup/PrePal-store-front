@@ -1,4 +1,3 @@
-// src/utils/storeSession.js
 export function getStoreSession() {
     try {
         const raw = localStorage.getItem("pp_store") || localStorage.getItem("pp_user");
@@ -29,7 +28,6 @@ export function getStoreSession() {
 export function requireStoreSessionOrRedirect() {
     const session = getStoreSession();
     if (!session) {
-        // אם אין חנות בלוקאל—נחזיר להתחברות
         window.location.href = "/login";
         return null;
     }

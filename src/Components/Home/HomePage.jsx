@@ -1,4 +1,3 @@
-// src/Components/Home/HomePage.jsx
 import React, { useEffect, useState } from "react";
 import "./HomePage.css";
 import TopBar from "../Bar/TopBar";
@@ -11,7 +10,12 @@ import {
 
 // --- constants ---
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const HOURS = Array.from({ length: 18 }, (_, i) => String(i + 6).padStart(2, "0") + ":00"); // 06:00–23:00
+const HOURS = [
+    '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
+    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+    '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'
+];
 
 // --- helpers for store hours ---
 function parseStoreHours(text = "") {
@@ -99,7 +103,6 @@ export default function HomePage() {
         if (!storeId) return;
         (async () => {
             try {
-                // TODO: If you change the endpoint shape, adjust mapping below accordingly.
                 const res = await fetch(
                     `https://5uos9aldec.execute-api.us-east-1.amazonaws.com/dev/getInfoFromStore/${encodeURIComponent(storeId)}`
                 );
@@ -132,7 +135,7 @@ export default function HomePage() {
         if (!store && !storeId) return;
 
         for (const [day, { open, close, closed }] of Object.entries(hoursObj)) {
-            if (!closed && open && close && open > close) {
+            if (!closed && open && close && open >= close) {
                 alert(`${day}: Opening time cannot be later than closing time`);
                 return;
             }

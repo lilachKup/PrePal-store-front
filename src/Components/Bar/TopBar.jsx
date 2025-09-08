@@ -1,4 +1,3 @@
-// src/components/Bar/TopBar.jsx
 import React from "react";
 import { CognitoUserPool } from "amazon-cognito-identity-js";
 import "./TopBar.css";

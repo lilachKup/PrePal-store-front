@@ -1,4 +1,3 @@
-/* src/components/TopBar.css */
 .topbar {
     display: flex;
     justify-content: space-between;
@@ -27,7 +26,7 @@
 
 .topbar .actions button {
     margin-left: 10px;
-    padding: 6px 20px;  /* כאן נקבע הגובה והרוחב */
+    padding: 6px 20px;  
     border: none;
     border-radius: 6px;
     background: white;
@@ -39,7 +38,7 @@
 .topbar {
     display: flex;
     justify-content: space-between;
-    align-items: center;   /* 👈 זה ממקם את כל התוכן באמצע אנכית */
+    align-items: center;   
     background-color: #6a0dad;
     color: white;
     height: 60px;
@@ -47,33 +46,29 @@
 }
 
 
-/* הרמה קלה של כל קבוצת הכפתורים בלי לשנות גודל כפתור */
 .topbar .actions {
   position: relative;
-  top: -8px;        /* נסי בין -2px ל- -6px עד שייראה לך מושלם */
-  display: flex;    /* לשמור על פריסה אופקית */
+  top: -8px;      
+  display: flex;   
   align-items: center;
 }
 
-/* כותרת + לוגו */
 .topbar .logo {
   margin: 0;
-  display: inline-flex;      /* מאפשר יישור אנכי עם התמונה */
-  align-items: center;       /* מיושר אנכית */
-  gap: 8px;                  /* רווח בין הטקסט ללוגו */
+  display: inline-flex;      
+  align-items: center;      
+  gap: 8px;  
   font-weight: 800;
 }
 
-/* תמונת הלוגו */
 .topbar .logo-image {
-  height: 50px;              /* קטן מגובה הטופ־בר (60px) כדי להיראות מדויק */
-  width: auto;               /* שומר פרופורציות */
+  height: 50px;           
+  width: auto;          
   vertical-align: middle;
-  -webkit-user-drag: none;   /* לא לגרור בטעות */
+  -webkit-user-drag: none;  
   user-select: none;
 }
 
-/* אופציונלי: במסכים קטנים להקטין מעט */
 @media (max-width: 420px) {
   .topbar .logo-image { height: 24px; }
 }

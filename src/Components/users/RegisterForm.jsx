@@ -1,4 +1,3 @@
-// src/Components/users/RegisterForm.jsx
 import React, { useState } from 'react';
 import {
   CognitoUserPool,
@@ -20,9 +19,10 @@ const poolData = {
 const userPool = new CognitoUserPool(poolData);
 
 const hoursOptions = [
-  '', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
-  '20:00', '21:00', '22:00', '23:00'
+  '', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
+  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+  '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+  '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'
 ];
 
 export default function RegisterForm() {
@@ -107,7 +107,7 @@ export default function RegisterForm() {
     setShowLoginButton(false);
 
 
-    // 1) basic client validations
+    // basic client validations
     if (!/^\d{9}$/.test(phoneNumber)) {
       setMessage("Invalid phone number (must be 9 digits)");
       return;
@@ -116,8 +116,8 @@ export default function RegisterForm() {
     const cleanStoreName = sanitizeText(storeName);
 
     for (const [day, { open, close, closed }] of Object.entries(openingHours)) {
-      if (!closed && open && close && open > close) {
-        setMessage(`${day}: Opening time cannot be later than closing time`);
+      if (!closed && open && close && open >= close) {
+        setMessage(`${day}: Opening time cannot be later or equal to closing time`);
         return;
       }
       else if (!closed && (open === '' || close === '')) {
@@ -126,10 +126,10 @@ export default function RegisterForm() {
       }
     }
 
-    // 2) build hours string
+    // build hours string
     const storeHours = buildStoreHoursString();
 
-    // 3) validate address in Israel (via utils)
+    // validate address in Israel (via utils)
     const addressStr = formatAddress({
       city,
       street: `${street} ${houseNumber}`,
@@ -153,7 +153,7 @@ export default function RegisterForm() {
       return;
     }
 
-    // 4) sign up in Cognito
+    // sign up in Cognito
     const attributes = [
       new CognitoUserAttribute({ Name: 'email', Value: email }),
       new CognitoUserAttribute({ Name: 'phone_number', Value: `+972${phoneNumber}` }),
@@ -172,7 +172,7 @@ export default function RegisterForm() {
         return;
       }
 
-      // 5) insert market to DB with verified coords
+      // insert market to DB with verified coords
       try {
         await createMarketInDB({
           store_id: result.userSub,
@@ -246,38 +246,45 @@ export default function RegisterForm() {
       </div>
 
       {/* Address (3 inputs) */}
-      <label>City:
-        <span className="req" aria-hidden="true">*</span></label>
-      <input
-        type="text"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        className={`form-input ${addressError ? 'input-error' : ''}`}
-        required
-      />
+      <div className="address-row">
+        <div className="address-field">
+          <label>City:<span className="req" aria-hidden="true">*</span></label>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+            required
+          />
+        </div>
 
-      <label>Street:</label>
-      <input
-        type="text"
-        value={street}
-        onChange={(e) => setStreet(e.target.value)}
-        className={`form-input ${addressError ? 'input-error' : ''}`}
+        <div className="address-field">
+          <label>Street:</label>
+          <input
+            type="text"
+            value={street}
+            onChange={(e) => setStreet(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+          />
+        </div>
 
-      />
-
-      <label>House Number:</label>
-      <input
-        type="text"
-        value={houseNumber}
-        onChange={(e) => setHouseNumber(e.target.value)}
-        className={`form-input ${addressError ? 'input-error' : ''}`}
-
-      />
+        <div className="address-field">
+          <label>House Number:</label>
+          <input
+            type="text"
+            value={houseNumber}
+            onChange={(e) => setHouseNumber(e.target.value)}
+            className={`form-input ${addressError ? 'input-error' : ''}`}
+          />
+        </div>
+      </div>
 
       {/* Inline address error (keeps user inputs) */}
       {addressError && (
         <p className="form-message error">{addressError}</p>
       )}
+
+
 
       <label>Store name:<span className="req" aria-hidden="true">*</span>
       </label>

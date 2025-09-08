@@ -176,25 +176,6 @@ forgot-password-link,
 } 
 
 
-/* Login Button diffrenet color option */
-/*.login-btn {
-  width: 100%;
-  background-color: #e0dcf9;
-  color: #3a0ca3;
-  border: none;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-}
-
-.login-btn:hover {
-  background-color: #3a0ca3;
-  color: white;
-}*/
-
 .login-btn {
   width: 100%;
   background-color: white;
@@ -229,4 +210,15 @@ forgot-password-link,
   font-weight: 600;
   font-size: 0.95em;
   line-height: 1;
+}
+
+.address-row {
+  display: flex;
+  gap: 10px; 
+}
+
+.address-field {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
 }

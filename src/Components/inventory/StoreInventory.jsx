@@ -189,8 +189,7 @@ const StoreInventory = () => {
         setFilteredProductsBySearch([]);
     };
 
-    if (!session) return null; // בינתיים, עד הרידיירקט
-
+    if (!session) return null; 
 
     return (
         <>
