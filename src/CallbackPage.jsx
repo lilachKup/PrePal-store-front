@@ -15,7 +15,6 @@ export default function CallbackPage() {
 
         if (userId) {
           console.log("✅ Logged in, redirecting to store menu with ID:", userId);
-          //navigate("/inventory", { replace: true });
           navigate("/home", { replace: true });
 
         } else {

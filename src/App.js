@@ -13,7 +13,6 @@ function App() {
   const auth = useAuth();
   const location = useLocation();
 
-  // נסה להביא משתמש גם מה-OIDC וגם מה-localStorage (כניסה עם SRP)
   const oidcUser = auth.user?.profile || null;
   const cached = (() => {
     try { return JSON.parse(localStorage.getItem('pp_user') || 'null'); }
@@ -36,7 +35,6 @@ function App() {
                         storeId={(effectiveUser.sub)}
                     />
                 ) : (
-                    // במקום להיתקע על Loading, מחזירים לדף הראשי
                     <Navigate to="/" replace />
                 )
             }
@@ -51,7 +49,6 @@ function App() {
               storeName={(effectiveUser.name)}
             />
           ) : (
-            // במקום להיתקע על Loading, מחזירים לדף הראשי
             <Navigate to="/" replace />
           )
         }
