@@ -151,7 +151,7 @@ const StoreInventory = () => {
             brand: product.brand,
             description: product.description,
             category: product.category,
-            image: product.image
+            image: product.image_url || ""
         });
         setEditingProduct(product.id);
     };
