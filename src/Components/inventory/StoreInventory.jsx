@@ -122,7 +122,7 @@ const StoreInventory = () => {
                 description: newProduct.description,
                 price: Number(newProduct.price),
                 quantity: Number(newProduct.quantity),
-                image_url: "",
+                image_url: newProduct.image || "https://img.icons8.com/ios-filled/50/ffffff/shopping-cart.png",
                 brand: newProduct.brand
             };
             await addProducts(productToAdd);
