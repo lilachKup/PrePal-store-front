@@ -325,7 +325,7 @@ const StoreInventory = () => {
                                 <div className="product-image">
                                     <img
                                         src={
-                                            product.image ||
+                                            product.image_url ||
                                             "https://img.icons8.com/ios-filled/50/ffffff/shopping-cart.png"
                                         }
                                         alt={product.name}
